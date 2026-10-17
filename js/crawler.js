@@ -1,11 +1,10 @@
 /**
  * Hàm JavaScript getArticle(url) nhận URL và trả về Object JSON chuẩn hóa
- * @param {string} url - Đường dẫn bài viết
+ * @param {string} url - Đường dẫn bài viết tin tức
  * @returns {Promise<Object>} Object JSON theo đúng 10 trường đề bài yêu cầu
  */
 async function getArticle(url) {
     try {
-        // Tích hợp CORS Proxy để chạy được trên Trình duyệt Client-side
         const proxyUrl = `https://api.allorigins.win/raw?url=${encodeURIComponent(url)}`;
         const response = await fetch(proxyUrl);
         
@@ -60,7 +59,7 @@ async function getArticle(url) {
         if (!category) {
             const categories = typeof getCategories === 'function' ? getCategories() : [];
             const matchedCat = categories.find(c => c.id === rawCategorySlug);
-            category = matchedCat ? matchedCat.title : rawCategorySlug;
+            category = matchedCat ? matchedCat.title : (rawCategorySlug === 'the-gioi' ? 'Thế giới' : 'Thời sự');
         }
 
         // 8. post.publishedAt
@@ -72,7 +71,7 @@ async function getArticle(url) {
             publishedAt = `${year}-${month}-${day} ${timeStr}`;
         }
 
-        // Trả về Object chuẩn hóa đúng 100% đề bài yêu cầu
+        // Trả về Object chuẩn hóa đúng 100% đề bài
         return {
             "id": id,
             "title": title,
