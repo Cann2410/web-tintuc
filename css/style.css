@@ -7,10 +7,17 @@ a { text-decoration: none; color: inherit; }
 header { background: #008837; color: #fff; position: sticky; top: 0; z-index: 1000; box-shadow: 0 2px 5px rgba(0,0,0,0.1); }
 .nav-wrapper { display: flex; align-items: center; justify-content: space-between; padding: 10px 0; }
 .logo { font-size: 24px; font-weight: bold; color: #fff; letter-spacing: 1px; cursor: pointer; }
-.nav-menu { display: flex; list-style: none; gap: 10px; flex-wrap: wrap; }
+.nav-menu { display: flex; list-style: none; gap: 10px; flex-wrap: wrap; align-items: center; }
+.nav-menu li { position: relative; }
 .nav-menu li a { color: #fff; font-weight: 600; padding: 8px 12px; border-radius: 4px; cursor: pointer; display: block; font-size: 15px; }
 .nav-menu li a:hover, .nav-menu li a.active { background: rgba(255,255,255,0.25); }
 .btn-crawler { background: #ff9800 !important; color: #fff !important; }
+
+/* DROPDOWN MENU CHO CHUYÊN MỤC CON */
+.has-dropdown:hover .dropdown-menu { display: block; }
+.dropdown-menu { display: none; position: absolute; top: 100%; left: 0; background: #fff; color: #333; list-style: none; min-width: 180px; box-shadow: 0 4px 10px rgba(0,0,0,0.15); border-radius: 4px; padding: 5px 0; z-index: 1001; }
+.dropdown-menu li a { color: #333 !important; font-weight: 500; padding: 8px 15px; font-size: 14px; }
+.dropdown-menu li a:hover { background: #f0f0f0 !important; color: #008837 !important; }
 
 /* MAIN CONTENT */
 main { padding: 30px 0; min-height: 75vh; }
@@ -54,7 +61,7 @@ main { padding: 30px 0; min-height: 75vh; }
 .btn-submit:hover { background: #006b2b; }
 .json-preview { background: #272822; color: #f8f8f2; padding: 15px; border-radius: 6px; overflow-x: auto; margin-top: 20px; font-family: monospace; font-size: 13px; }
 
-/* FOOTER ĐẦY ĐỦ THÀNH PHẦN */
+/* FOOTER WEBSITE */
 footer { background: #1b1e21; color: #aaa; padding: 40px 0 20px 0; margin-top: 50px; }
 .footer-grid { display: grid; grid-template-columns: 2fr 1fr 1fr 1.5fr; gap: 30px; margin-bottom: 30px; }
 .footer-col h3, .footer-col h4 { color: #fff; margin-bottom: 15px; }
@@ -67,7 +74,7 @@ footer { background: #1b1e21; color: #aaa; padding: 40px 0 20px 0; margin-top: 5
 .social-icon { width: 35px; height: 35px; background: #333; color: #fff; display: flex; align-items: center; justify-content: center; border-radius: 50%; font-weight: bold; font-size: 12px; }
 .footer-bottom { text-align: center; border-top: 1px solid #333; padding-top: 20px; font-size: 13px; }
 
-/* RESPONSIVE MÀN HÌNH TABLET VÀ MOBILE */
+/* RESPONSIVE */
 @media (max-width: 992px) {
     .featured-grid { grid-template-columns: 1fr; }
     .footer-grid { grid-template-columns: 1fr 1fr; }
