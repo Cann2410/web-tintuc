@@ -1,22 +1,23 @@
-// === 1. KHỞI TẠO VÀ ĐỌC DỮ LIỆU TỪ LOCALSTORAGE / JSON ===
+// === 1. ĐỌC DỮ LIỆU TỪ THƯ MỤC DATA CẬP NHẬT VÀO LOCALSTORAGE ===
 async function loadInitialData() {
-    if (!localStorage.getItem('categories')) {
-        try {
-            const res = await fetch('./data/menu.json');
-            const data = await res.json();
-            localStorage.setItem('categories', JSON.stringify(data.menu || []));
-        } catch(e) {
-            console.error("Lỗi đọc file data/menu.json:", e);
+    try {
+        // Luôn đọc lại file menu.json mới nhất
+        const resMenu = await fetch('./data/menu.json');
+        const dataMenu = await resMenu.json();
+        if (dataMenu && dataMenu.menu) {
+            localStorage.setItem('categories', JSON.stringify(dataMenu.menu));
         }
+    } catch(e) {
+        console.error("Lỗi tải data/menu.json:", e);
     }
 
     if (!localStorage.getItem('posts')) {
         try {
-            const res = await fetch('./data/posts.json');
-            const posts = await res.json();
+            const resPosts = await fetch('./data/posts.json');
+            const posts = await resPosts.json();
             localStorage.setItem('posts', JSON.stringify(posts || []));
         } catch(e) {
-            console.error("Lỗi đọc file data/posts.json:", e);
+            console.error("Lỗi tải data/posts.json:", e);
         }
     }
 }
@@ -32,7 +33,7 @@ function savePostToStorage(newPost) {
     localStorage.setItem('posts', JSON.stringify(posts));
 }
 
-// === 2. THANH ĐIỀU HƯỚNG (NAVBAR) ===
+// === 2. HIỂN THỊ THANH ĐIỀU HƯỚNG (NAVBAR VÀ DROPDOWN) ===
 function renderNavbar() {
     const categories = getCategories();
     const navMenuEl = document.getElementById('navbarMenu');
@@ -42,7 +43,22 @@ function renderNavbar() {
     let footerHtml = '';
 
     categories.forEach(cat => {
-        navHtml += `<li><a onclick="renderCategory('${cat.id}')" id="nav-${cat.id}">${cat.title}</a></li>`;
+        if (cat.children && cat.children.length > 0) {
+            let subHtml = `<ul class="dropdown-menu">`;
+            cat.children.forEach(child => {
+                subHtml += `<li><a onclick="renderCategory('${child.id}')">${child.title}</a></li>`;
+            });
+            subHtml += `</ul>`;
+
+            navHtml += `
+                <li class="has-dropdown">
+                    <a onclick="renderCategory('${cat.id}')" id="nav-${cat.id}">${cat.title} ▾</a>
+                    ${subHtml}
+                </li>
+            `;
+        } else {
+            navHtml += `<li><a onclick="renderCategory('${cat.id}')" id="nav-${cat.id}">${cat.title}</a></li>`;
+        }
         footerHtml += `<li><a onclick="renderCategory('${cat.id}')">${cat.title}</a></li>`;
     });
 
@@ -52,7 +68,7 @@ function renderNavbar() {
     footerCatEl.innerHTML = footerHtml;
 }
 
-// === 3. TRANG DANH SÁCH BÀI VIẾT THEO CHUYÊN MỤC (TOP 1-2 & XẾP DỌC) ===
+// === 3. HIỂN THỊ DANH SÁCH BÀI VIẾT (LAYOUT TOP 1 LỚN + 2 NHỎ & XẾP DỌC) ===
 function renderCategory(catId = 'home') {
     const app = document.getElementById('appView');
     const posts = getPosts();
@@ -66,29 +82,44 @@ function renderCategory(catId = 'home') {
     let currentCatTitle = "Trang chủ";
 
     if (catId !== 'home' && catId !== 'latest') {
-        const targetCat = categories.find(c => c.id === catId);
-        if (targetCat) currentCatTitle = targetCat.title;
-        filteredPosts = posts.filter(p => p.category && (p.category.toLowerCase().includes(catId.toLowerCase()) || p.category.toLowerCase().includes(currentCatTitle.toLowerCase())));
+        let foundCat = categories.find(c => c.id === catId);
+        if (!foundCat) {
+            categories.forEach(c => {
+                if (c.children) {
+                    let sub = c.children.find(s => s.id === catId);
+                    if (sub) foundCat = sub;
+                }
+            });
+        }
+
+        if (foundCat) currentCatTitle = foundCat.title;
+
+        filteredPosts = posts.filter(p => {
+            if (!p.category) return false;
+            const pCat = p.category.toLowerCase();
+            const cId = catId.toLowerCase();
+            const cTitle = currentCatTitle.toLowerCase();
+            return pCat.includes(cId) || pCat.includes(cTitle) || cTitle.includes(pCat);
+        });
     } else if (catId === 'latest') {
         currentCatTitle = "Tin Mới Nhất";
     }
 
-    // Sắp xếp thời gian giảm dần (Mới -> Cũ)
+    // Sắp xếp bài mới nhất lên trên
     filteredPosts.sort((a, b) => new Date(b.publishedAt) - new Date(a.publishedAt));
 
     if (filteredPosts.length === 0) {
-        app.innerHTML = `<h2 class="section-title">${currentCatTitle}</h2><p style="margin-top:15px;">Chưa có bài viết nào trong chuyên mục này. Bấm vào <b>Crawler Page</b> để cào thêm bài viết mới!</p>`;
+        app.innerHTML = `<h2 class="section-title">${currentCatTitle}</h2><p style="margin-top:15px;">Chưa có bài viết nào trong chuyên mục này. Hãy bấm vào <b>Crawler Page</b> để cào thêm bài viết mới!</p>`;
         return;
     }
 
-    // Tách 1 bài lớn + 2 bài nhỏ
     const featuredLarge = filteredPosts[0];
     const featuredSmall = filteredPosts.slice(1, 3);
     const remainingPosts = filteredPosts.slice(3);
 
     let html = `<h2 class="section-title">${currentCatTitle}</h2>`;
 
-    // Top Section (Grid 1 lớn + 2 nhỏ)
+    // Layout Top: 1 Bài lớn bên trái + 2 Bài nhỏ bên phải
     html += `<div class="featured-grid">`;
     if (featuredLarge) {
         html += `
@@ -175,7 +206,7 @@ function renderCrawlerPage() {
     app.innerHTML = `
         <div class="crawler-box">
             <h2 class="section-title">Chức năng Crawler Bài viết</h2>
-            <p style="margin-bottom: 15px;">Nhập URL bài viết từ website Dantri.com.vn để tự động bóc tách dữ liệu:</p>
+            <p style="margin-bottom: 15px;">Nhập URL bài viết tin tức từ website Dantri.com.vn để tự động bóc tách dữ liệu:</p>
             
             <div class="form-group">
                 <label for="crawlUrl">Đường dẫn bài viết (URL):</label>
@@ -207,7 +238,6 @@ async function handleCrawl() {
     statusEl.innerText = "Đang cào dữ liệu bài viết...";
     previewContainer.style.display = "none";
 
-    // Gọi hàm getArticle từ file js/crawler.js
     const result = await getArticle(urlInput);
 
     if (result) {
@@ -230,7 +260,7 @@ function saveCrawledArticle() {
     }
 }
 
-// KHỞI CHẠY TỰ ĐỘNG
+// TỰ ĐỘNG CHẠY KHI TẢI TRANG
 window.onload = async function() {
     await loadInitialData();
     renderNavbar();
